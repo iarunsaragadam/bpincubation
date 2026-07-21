@@ -52,10 +52,18 @@ export class QuestionComponent implements OnInit {
 
       this.questionService
         .getQuestion(this.id, this.audience)
-        .subscribe((question) => (this.question = question));
-      this.tipService
-        .getTip(this.tipId, this.audience)
-        .subscribe((tip) => (this.tip = tip));
+        .subscribe((question) => {
+          this.question = question;
+          const isFactual = question?.factual;
+          const tipAudience = isFactual
+            ? `${this.audience}_factual`
+            : this.audience;
+          const tipCount = this.getTipCount(isFactual);
+          this.tipId = (this.id % tipCount) || 1;
+          this.tipService
+            .getTip(this.tipId, tipAudience)
+            .subscribe((tip) => (this.tip = tip));
+        });
 
       if (this.isTimerAutomatic) {
         this.startTimer();
@@ -72,15 +80,17 @@ export class QuestionComponent implements OnInit {
     if (this.id == 0) {
       this.id = 1;
     }
+  }
 
-    let totalTips =
-      this.audience === 'investors'
-        ? QuestionsData.INVESTOR_TIPS.length
-        : QuestionsData.CUSTOMER_TIPS.length;
-    this.tipId = this.id % totalTips;
-    if (this.tipId == 0) {
-      this.tipId = 1;
+  private getTipCount(factual?: boolean): number {
+    if (this.audience === 'investors') {
+      return factual
+        ? QuestionsData.INVESTOR_FACTUAL_TIPS.length
+        : QuestionsData.INVESTOR_TIPS.length;
     }
+    return factual
+      ? QuestionsData.CUSTOMER_FACTUAL_TIPS.length
+      : QuestionsData.CUSTOMER_TIPS.length;
   }
 
   startTimer(): void {

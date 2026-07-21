@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
 import { InMemoryDbService } from 'angular-in-memory-web-api';
-import { QuestionsData } from '../../in-memory-data/questions-data';
+import {
+  QuestionsData,
+  QuestionEntry,
+} from '../../in-memory-data/questions-data';
 import { Question } from '../../interfaces/question';
 import { Tip } from '../../interfaces/tip';
 
@@ -18,38 +21,43 @@ export class InMemoryDataService implements InMemoryDbService {
 
     const tips_investors = this.formatTipsData(QuestionsData.INVESTOR_TIPS);
     const tips_customers = this.formatTipsData(QuestionsData.CUSTOMER_TIPS);
+    const tips_investors_factual = this.formatTipsData(
+      QuestionsData.INVESTOR_FACTUAL_TIPS
+    );
+    const tips_customers_factual = this.formatTipsData(
+      QuestionsData.CUSTOMER_FACTUAL_TIPS
+    );
 
     return {
       questions_investors,
       questions_customers,
       tips_investors,
       tips_customers,
+      tips_investors_factual,
+      tips_customers_factual,
     };
   }
 
-  // Overrides the genId method to ensure that a hero always has an id.
-  // If the heroes array is empty,
-  // the method below returns the initial number (11).
-  // if the heroes array is not empty, the method below returns the highest
-  // hero id + 1.
   genId(questions: Question[]): number {
     return questions.length > 0
       ? Math.max(...questions.map((question) => question.id)) + 1
       : 11;
   }
 
-  private formatQuestionsData(questionsArray: Array<string>): Array<Question> {
+  private formatQuestionsData(
+    questionsArray: Array<QuestionEntry>
+  ): Array<Question> {
     let questions: Array<Question> = [];
     let id = 1;
 
-    questionsArray = this.shuffle(questionsArray);
-    questionsArray.forEach((questionText) => {
+    questionsArray = this.shuffle([...questionsArray]);
+    questionsArray.forEach((entry) => {
       questions.push({
         id: id++,
-        question: questionText,
+        question: entry.text,
+        ...(entry.factual ? { factual: true } : {}),
       });
     });
-    
 
     return questions;
   }
@@ -58,32 +66,31 @@ export class InMemoryDataService implements InMemoryDbService {
     let tips: Array<Tip> = [];
     let id = 1;
 
-    tipsArray = this.shuffle(tipsArray);
+    tipsArray = this.shuffle([...tipsArray]);
     tipsArray.forEach((tipText) => {
       tips.push({
         id: id++,
         tip: tipText,
       });
     });
-    
+
     return tips;
   }
-  private shuffle(array: Array<any>): Array<any> {
-    var currentIndex = array.length,  randomIndex;
-  
-    // While there remain elements to shuffle...
+
+  private shuffle<T>(array: Array<T>): Array<T> {
+    var currentIndex = array.length,
+      randomIndex;
+
     while (0 !== currentIndex) {
-  
-      // Pick a remaining element...
       randomIndex = Math.floor(Math.random() * currentIndex);
       currentIndex--;
-  
-      // And swap it with the current element.
+
       [array[currentIndex], array[randomIndex]] = [
-        array[randomIndex], array[currentIndex]];
+        array[randomIndex],
+        array[currentIndex],
+      ];
     }
-  
+
     return array;
   }
-  
 }
